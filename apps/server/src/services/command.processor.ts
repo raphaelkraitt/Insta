@@ -30,6 +30,24 @@ export class CommandProcessor {
             }
         }
 
+        // Verify user actually exists before processing command
+        try {
+            const userCheck = await query('SELECT id FROM users WHERE username = $1', [username]);
+            if (userCheck.rows.length === 0) {
+                console.error(`❌ User ${username} still doesn't exist after creation attempt!`);
+                return {
+                    success: false,
+                    message: 'Failed to create user account. Please try again or contact support.'
+                };
+            }
+        } catch (e) {
+            console.error('Error checking user existence:', e);
+            return {
+                success: false,
+                message: 'Database error. Please try again.'
+            };
+        }
+
         const result = await this.dispatch(command, username, args, auctionId);
         if (newUserMessage) {
             result.message += newUserMessage;
