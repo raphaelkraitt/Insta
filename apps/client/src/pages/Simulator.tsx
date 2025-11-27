@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../api';
 
 const Simulator: React.FC = () => {
     const [username, setUsername] = useState('');
@@ -14,8 +14,7 @@ const Simulator: React.FC = () => {
         setError('');
 
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-            const res = await axios.post(`${API_URL}/webhooks/instagram`, {
+            const res = await api.post('/webhooks/instagram', {
                 username,
                 text,
                 auctionId: auctionId ? parseInt(auctionId) : undefined
