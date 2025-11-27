@@ -14,15 +14,21 @@ export class CommandProcessor {
         const command = parts[0];
         const args = parts.slice(1);
 
+        let newUserMessage = '';
         // Ensure user exists - create if doesn't exist
         try {
             await UserService.createAccount(username);
             console.log(`✅ Created new user: ${username} (No password set yet)`);
+            newUserMessage = ' (Welcome! Go to the website to set your password.)';
         } catch (e) {
             // User exists, ignore
         }
 
-        return this.dispatch(command, username, args, auctionId);
+        const result = await this.dispatch(command, username, args, auctionId);
+        if (newUserMessage) {
+            result.message += newUserMessage;
+        }
+        return result;
     }
 
     private static async dispatch(command: string, username: string, args: string[], auctionId?: number): Promise<CommandResult> {
