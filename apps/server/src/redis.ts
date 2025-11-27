@@ -10,8 +10,14 @@ const client = createClient({
 client.on('error', (err) => console.log('Redis Client Error', err));
 
 export const connectRedis = async () => {
-    await client.connect();
-    console.log('Connected to Redis');
+    console.log(`Attempting to connect to Redis at: ${process.env.REDIS_URL?.split('@')[1] || 'localhost'}`);
+    try {
+        await client.connect();
+        console.log('Connected to Redis');
+    } catch (err) {
+        console.error('Redis connection failed:', err);
+        throw err;
+    }
 };
 
 export default client;

@@ -13,9 +13,14 @@ router.post('/instagram', async (req, res) => {
 
     console.log(`Received comment from ${username}: ${text} (Auction: ${auctionId || 'None'})`);
 
-    const result = await CommandProcessor.process(username, text, auctionId);
-
-    res.json(result);
+    try {
+        const result = await CommandProcessor.process(username, text, auctionId);
+        console.log('Command processed result:', result);
+        res.json(result);
+    } catch (error) {
+        console.error('Error processing webhook:', error);
+        res.status(500).json({ error: 'Internal Server Error processing command' });
+    }
 });
 
 export default router;
