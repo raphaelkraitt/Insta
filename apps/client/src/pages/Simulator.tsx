@@ -14,7 +14,8 @@ const Simulator: React.FC = () => {
         setError('');
 
         try {
-            const res = await axios.post('http://localhost:3000/webhooks/instagram', {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const res = await axios.post(`${API_URL}/webhooks/instagram`, {
                 username,
                 text,
                 auctionId: auctionId ? parseInt(auctionId) : undefined
