@@ -21,6 +21,7 @@ RUN npm run build
 # Build server
 WORKDIR /app/apps/server
 RUN npm run build
+RUN cp src/db/schema.sql dist/db/schema.sql
 
 # Expose port
 EXPOSE 3000
