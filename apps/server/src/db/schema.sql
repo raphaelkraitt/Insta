@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
   username VARCHAR(255) UNIQUE NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
+  password_encrypted TEXT,
   balance INTEGER DEFAULT 0,
   last_earn_date TIMESTAMP,
   streak INTEGER DEFAULT 0,

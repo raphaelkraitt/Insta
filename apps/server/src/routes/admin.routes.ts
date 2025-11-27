@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { query } from '../db';
 import { AuctionService } from '../services/auction.service';
+import { UserService } from '../services/user.service';
 import fs from 'fs';
 import path from 'path';
 
@@ -24,32 +25,16 @@ router.get('/', (req, res) => {
 router.get('/credentials', async (req, res) => {
     try {
         const result = await query(
-            `SELECT id, username, balance, streak, last_earn_date, created_at 
+            `SELECT id, username, balance, streak, last_earn_date, created_at, password_encrypted 
              FROM users 
              ORDER BY created_at DESC`
         );
 
         const users = result.rows;
 
-        // Load passwords from CSV
-        const filePath = path.join(__dirname, '../../credentials.csv');
-        const passwordMap = new Map<string, string>();
-
-        if (fs.existsSync(filePath)) {
-            const csvContent = fs.readFileSync(filePath, 'utf-8');
-            const lines = csvContent.trim().split('\n');
-            // Skip header
-            lines.slice(1).forEach(line => {
-                const parts = line.split(',');
-                if (parts.length >= 2) {
-                    passwordMap.set(parts[0], parts[1]);
-                }
-            });
-        }
-
         const usersWithPasswords = users.map(user => ({
             ...user,
-            password: passwordMap.get(user.username) || 'Not found'
+            password: UserService.decrypt(user.password_encrypted)
         }));
 
         const html = `
