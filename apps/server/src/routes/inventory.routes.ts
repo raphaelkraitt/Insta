@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
     try {
         const userId = req.query.userId || 1; // Hack for testing
         const result = await query(
-            `SELECT ui.*, i.name, i.image_url, i.category, i.slot_type 
+            `SELECT ui.*, i.name, i.image_url, i.category, i.slot_type, i.rarity 
              FROM user_items ui 
              JOIN items i ON ui.item_id = i.id 
              WHERE ui.user_id = $1`,

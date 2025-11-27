@@ -3,17 +3,19 @@ import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import axios from 'axios';
+import { CollectionGallery } from '../components/CollectionGallery';
 
 const socket = io('http://localhost:3000');
 const API_URL = 'http://localhost:3000';
 
 interface InventoryItem {
-    id: number; // user_item_id
+    id: number;
     item_id: number;
     name: string;
     image_url: string;
     category: string;
     slot_type: string;
+    rarity: string;
     is_equipped: boolean;
     location: string;
     slot_id: string;
@@ -42,6 +44,7 @@ const Dashboard: React.FC = () => {
             socket.off('bid_update');
         };
     }, [auction]);
+
     const fetchInventory = async () => {
         if (!user) return;
         try {
@@ -53,134 +56,103 @@ const Dashboard: React.FC = () => {
         }
     };
 
-    const handleEquip = async (item: InventoryItem) => {
-        try {
-            await axios.post(`${API_URL}/inventory/equip`, {
-                userItemId: item.id,
-                userId: user?.id,
-                location: 'room_1',
-                slotId: 'wall_center' // For now, just one slot
-            });
-            fetchInventory();
-        } catch (err) {
-            console.error(err);
-            alert('Failed to equip item');
-        }
-    };
-
     return (
-        <div className="min-h-screen bg-gray-50">
-            <nav className="bg-white shadow p-4 flex justify-between items-center sticky top-0 z-10">
-                <h1 className="text-xl font-bold text-primary">Insta Game</h1>
-                <div className="flex items-center gap-4">
-                    <span className="font-semibold bg-green-100 text-green-800 px-3 py-1 rounded-full">
-                        ${user?.balance}
-                    </span>
-                    <button onClick={logout} className="text-red-500 hover:text-red-700">Logout</button>
+        <div className="min-h-screen bg-game-bg-main pb-6">
+            {/* Navigation - Mobile Optimized */}
+            <nav className="bg-gradient-to-r from-game-bg-secondary to-game-bg-card shadow-neon p-3 md:p-4 flex flex-col sm:flex-row justify-between items-center sticky top-0 z-50 border-b-2 border-primary/30 gap-3 sm:gap-0">
+                <h1 className="text-xl md:text-2xl font-game font-bold gradient-text flex items-center gap-2">
+                    <span className="text-2xl md:text-3xl">🎮</span>
+                    <span className="hidden sm:inline">Instagram Game</span>
+                    <span className="sm:hidden">InstaGame</span>
+                </h1>
+                <div className="flex items-center gap-2 md:gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                    <div className="balance-display flex items-center gap-1.5 md:gap-2 text-sm md:text-base">
+                        <span className="text-xl md:text-2xl">💰</span>
+                        <span>${user?.balance.toLocaleString()}</span>
+                    </div>
+                    <button
+                        onClick={logout}
+                        className="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1.5 md:px-4 md:py-2 rounded-xl font-game text-sm md:text-base hover:from-red-600 hover:to-red-700 transition-all shadow-lg"
+                    >
+                        Logout
+                    </button>
                 </div>
             </nav>
 
-            <main className="p-8 max-w-6xl mx-auto space-y-8">
-
-
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Inventory Section */}
-                    <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg border border-gray-100">
-                        <h2 className="text-xl font-bold mb-4 text-gray-800">Inventory</h2>
-                        {inventory.length === 0 ? (
-                            <p className="text-gray-500 italic">You don't own any items yet.</p>
-                        ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                {inventory.map(item => (
-                                    <div key={item.id} className={`p-3 border rounded-lg transition hover:shadow-md ${item.is_equipped ? 'bg-blue-50 border-blue-200' : 'bg-white'}`}>
-                                        <div className="aspect-square bg-gray-100 rounded mb-2 overflow-hidden">
-                                            <img src={item.image_url || 'https://via.placeholder.com/100'} alt={item.name} className="w-full h-full object-cover" />
-                                        </div>
-                                        <div className="font-medium text-sm truncate">{item.name}</div>
-                                        <div className="text-xs text-gray-500 mb-2 capitalize">{item.category}</div>
-                                        {!item.is_equipped && item.slot_type === 'wall' && (
-                                            <button
-                                                onClick={() => handleEquip(item)}
-                                                className="w-full bg-blue-600 text-white text-xs py-1.5 rounded hover:bg-blue-700 transition"
-                                            >
-                                                Equip
-                                            </button>
-                                        )}
-                                        {item.is_equipped && (
-                                            <div className="text-xs text-blue-600 font-semibold text-center py-1">Equipped</div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+            <main className="p-3 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-4 md:space-y-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
+                    {/* Collection Gallery */}
+                    <div className="lg:col-span-2 order-1">
+                        <CollectionGallery items={inventory} username={user?.username || 'Player'} />
                     </div>
 
-                    {/* Sidebar: Auction & Ads */}
-                    <div className="space-y-8">
-                        {/* Top Ad Space */}
-                        <div className="bg-gradient-to-br from-purple-100 to-pink-100 p-6 rounded-lg border-2 border-dashed border-purple-300 flex flex-col items-center justify-center h-48">
-                            <span className="text-purple-600 font-bold text-sm mb-2">📢 SPONSORED</span>
-                            <span className="text-gray-400 font-semibold text-lg">Your Ad Here</span>
-                            <span className="text-gray-300 text-xs mt-2">300x250 Premium Space</span>
-                        </div>
-
-                        {/* Live Auction */}
-                        <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-primary relative overflow-hidden">
-                            <div className="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-bl">LIVE</div>
-                            <h2 className="text-lg font-bold mb-4 text-primary">Active Auction</h2>
+                    {/* Sidebar */}
+                    <div className="space-y-4 md:space-y-6 order-2">
+                        {/* Live Auction - Priority on Mobile */}
+                        <div className="bg-gradient-to-br from-primary/10 to-secondary/10 p-4 md:p-6 rounded-game shadow-neon-strong border-2 border-primary relative overflow-hidden backdrop-blur-sm">
+                            <div className="absolute top-0 right-0 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-game font-bold px-2 md:px-3 py-1 md:py-1.5 rounded-bl-lg animate-pulse-glow">
+                                LIVE
+                            </div>
+                            <h2 className="text-lg md:text-xl font-game font-bold mb-3 md:mb-4 gradient-text">Active Auction</h2>
                             {auction ? (
                                 <div className="text-center">
-                                    <div className="text-5xl font-black text-gray-900 mb-2">${auction.currentBid}</div>
-                                    <p className="text-gray-500 mb-6 text-sm uppercase tracking-wide">Current Highest Bid</p>
-                                    <p className="text-xs text-gray-400 mb-4">Bid via Instagram comments!</p>
+                                    <div className="text-4xl md:text-5xl font-game font-black text-accent mb-2 text-glow">${auction.currentBid}</div>
+                                    <p className="text-game-text-secondary mb-3 md:mb-4 text-xs md:text-sm uppercase tracking-wide font-tech">Current Highest Bid</p>
+                                    <p className="text-xs text-game-text-muted">Bid via Instagram comments!</p>
                                 </div>
                             ) : (
-                                <div className="text-center py-8">
-                                    <p className="text-gray-400">No active auction</p>
-                                    <p className="text-xs text-gray-300 mt-2">Check back later</p>
+                                <div className="text-center py-6 md:py-8">
+                                    <div className="text-4xl md:text-5xl mb-2 md:mb-3">🏆</div>
+                                    <p className="text-game-text-secondary font-game text-sm md:text-base">No active auction</p>
+                                    <p className="text-xs text-game-text-muted mt-2">Check back later</p>
                                 </div>
                             )}
                         </div>
 
-                        {/* Middle Ad Space */}
-                        <div className="bg-gradient-to-br from-blue-100 to-cyan-100 p-4 rounded-lg border-2 border-dashed border-blue-300 flex flex-col items-center justify-center h-32">
-                            <span className="text-blue-600 font-bold text-xs mb-1">ADVERTISEMENT</span>
-                            <span className="text-gray-400 font-medium">Banner Space</span>
-                            <span className="text-gray-300 text-xs mt-1">300x100</span>
+                        {/* Top Ad - Hidden on small mobile, shown on tablet+ */}
+                        <div className="hidden md:flex glass p-6 rounded-game border-2 border-dashed border-primary/30 flex-col items-center justify-center h-48">
+                            <span className="text-primary font-game font-bold mb-2">📢 SPONSORED</span>
+                            <span className="text-game-text-secondary font-semibold text-lg">Your Ad Here</span>
+                            <span className="text-game-text-muted text-xs mt-2">300x250</span>
                         </div>
 
-                        {/* Buy Me a Coffee */}
-                        <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200 text-center">
-                            <h3 className="font-bold text-yellow-800 mb-2">Support the Dev</h3>
+                        {/* Buy Me a Coffee - Prominent on Mobile */}
+                        <div className="bg-gradient-to-br from-accent/20 to-accent/10 p-4 rounded-game border-2 border-accent/50 text-center backdrop-blur-sm">
+                            <h3 className="font-game font-bold text-accent mb-2 md:mb-3 text-base md:text-lg">Support the Dev</h3>
                             <a
                                 href="https://buymeacoffee.com/instagames"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="bg-yellow-400 text-yellow-900 font-bold py-2 px-4 rounded-full shadow hover:bg-yellow-300 transition flex items-center justify-center gap-2 mx-auto w-full"
+                                className="bg-gradient-to-r from-accent to-accent-light text-white font-game font-bold py-2.5 md:py-3 px-4 rounded-xl shadow-lg hover:shadow-neon transition-all flex items-center justify-center gap-2 w-full text-sm md:text-base"
                             >
-                                <span>☕</span> Buy me a coffee
+                                <span className="text-xl md:text-2xl">☕</span> Buy me a coffee
                             </a>
                         </div>
 
-                        {/* Bottom Ad Space */}
-                        <div className="bg-gradient-to-br from-green-100 to-emerald-100 p-4 rounded-lg border-2 border-dashed border-green-300 flex flex-col items-center justify-center h-40">
-                            <span className="text-green-600 font-bold text-xs mb-1">📣 SPONSORED</span>
-                            <span className="text-gray-400 font-semibold">Square Ad</span>
-                            <span className="text-gray-300 text-xs mt-1">250x250</span>
+                        {/* Other Ads - Hidden on mobile */}
+                        <div className="hidden md:flex glass p-4 rounded-game border-2 border-dashed border-secondary/30 flex-col items-center justify-center h-32">
+                            <span className="text-secondary font-game font-bold text-xs mb-1">ADVERTISEMENT</span>
+                            <span className="text-game-text-secondary font-semibold">Banner Space</span>
+                            <span className="text-game-text-muted text-xs mt-1">300x100</span>
+                        </div>
+
+                        <div className="hidden lg:flex glass p-4 rounded-game border-2 border-dashed border-success/30 flex-col items-center justify-center h-40">
+                            <span className="text-success font-game font-bold text-xs mb-1">📣 SPONSORED</span>
+                            <span className="text-game-text-secondary font-semibold">Square Ad</span>
+                            <span className="text-game-text-muted text-xs mt-1">250x250</span>
                         </div>
                     </div>
                 </div>
 
-                {/* Footer */}
-                <footer className="mt-12 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
-                    <p className="mb-2">© 2024 Instagram Game. All rights reserved.</p>
-                    <div className="flex justify-center gap-4">
-                        <Link to="/privacy" className="hover:text-blue-600">Privacy Policy</Link>
-                        <span>•</span>
-                        <Link to="/terms" className="hover:text-blue-600">Terms of Service</Link>
-                        <span>•</span>
-                        <a href="https://buymeacoffee.com/instagames" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600">Support</a>
+                {/* Footer - Mobile Optimized */}
+                <footer className="mt-8 md:mt-12 pt-4 md:pt-6 border-t border-game-border text-center text-xs md:text-sm text-game-text-muted font-tech">
+                    <p className="mb-2 md:mb-3">© 2024 Instagram Game. All rights reserved.</p>
+                    <div className="flex flex-wrap justify-center gap-3 md:gap-6">
+                        <Link to="/privacy" className="hover:text-primary transition">Privacy</Link>
+                        <span className="hidden sm:inline">•</span>
+                        <Link to="/terms" className="hover:text-primary transition">Terms</Link>
+                        <span className="hidden sm:inline">•</span>
+                        <a href="https://buymeacoffee.com/instagames" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition">Support</a>
                     </div>
                 </footer>
             </main>
