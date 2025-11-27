@@ -16,10 +16,8 @@ export class CommandProcessor {
 
         // Ensure user exists - create if doesn't exist
         try {
-            const { user, passwordRaw } = await UserService.createAccount(username);
-            console.log(`✅ Created new user: ${username}`);
-            console.log(`🔑 Password: ${passwordRaw}`);
-            console.log(`   👉 Save this password! The user needs it to login to the web dashboard.`);
+            await UserService.createAccount(username);
+            console.log(`✅ Created new user: ${username} (No password set yet)`);
         } catch (e) {
             // User exists, ignore
         }

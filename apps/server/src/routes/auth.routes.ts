@@ -3,6 +3,28 @@ import { UserService } from '../services/user.service';
 
 const router = Router();
 
+router.post('/check-status', async (req, res) => {
+    try {
+        const { username } = req.body;
+        const status = await UserService.checkUserStatus(username);
+        res.json(status);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+router.post('/set-password', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        await UserService.setPassword(username, password);
+        res.json({ success: true });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 router.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;

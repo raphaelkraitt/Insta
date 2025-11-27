@@ -34,26 +34,37 @@ export class UserService {
         }
     }
 
-    static async createAccount(username: string): Promise<{ user: User; passwordRaw: string }> {
+    static async createAccount(username: string): Promise<User> {
         // Check if user exists
         const existing = await query('SELECT * FROM users WHERE username = $1', [username]);
         if (existing.rows.length > 0) {
             throw new Error('User already exists');
         }
 
-        // Generate random password
-        const passwordRaw = Math.random().toString(36).slice(-8);
-        const passwordHash = await bcrypt.hash(passwordRaw, SALT_ROUNDS);
-        const passwordEncrypted = this.encrypt(passwordRaw);
-
-        // Insert user
+        // Insert user with NULL password
         const result = await query(
-            'INSERT INTO users (username, password_hash, password_encrypted, balance) VALUES ($1, $2, $3, $4) RETURNING id, username, balance',
-            [username, passwordHash, passwordEncrypted, 0]
+            'INSERT INTO users (username, balance) VALUES ($1, $2) RETURNING id, username, balance',
+            [username, 0]
         );
 
-        const user = result.rows[0];
-        return { user, passwordRaw };
+        return result.rows[0];
+    }
+
+    static async checkUserStatus(username: string): Promise<{ exists: boolean; hasPassword: boolean }> {
+        const result = await query('SELECT password_hash FROM users WHERE username = $1', [username]);
+        if (result.rows.length === 0) {
+            return { exists: false, hasPassword: false };
+        }
+        return { exists: true, hasPassword: !!result.rows[0].password_hash };
+    }
+
+    static async setPassword(username: string, password: string): Promise<void> {
+        const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+        const passwordEncrypted = this.encrypt(password);
+        await query(
+            'UPDATE users SET password_hash = $1, password_encrypted = $2 WHERE username = $3',
+            [passwordHash, passwordEncrypted, username]
+        );
     }
 
     static async validateCredentials(username: string, password: string): Promise<User | null> {
@@ -61,6 +72,10 @@ export class UserService {
         if (result.rows.length === 0) return null;
 
         const user = result.rows[0];
+
+        // If user has no password, they cannot login this way (must set password first)
+        if (!user.password_hash) return null;
+
         const match = await bcrypt.compare(password, user.password_hash);
 
         if (!match) return null;
