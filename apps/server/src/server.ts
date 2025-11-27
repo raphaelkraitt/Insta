@@ -39,10 +39,20 @@ app.get('/', (req, res) => {
 });
 
 const startServer = async () => {
+    console.log('Starting server initialization...');
+
+    console.log('Initializing Database...');
     await initDb();
+    console.log('Database initialized.');
+
+    console.log('Connecting to Redis...');
     await connectRedis();
+    console.log('Redis connected.');
+
+    console.log('Initializing Auction Service...');
     AuctionService.init(io);
     AuctionScheduler.start();
+    console.log('Auction Service initialized.');
 
     httpServer.listen(Number(PORT), '0.0.0.0', () => {
         console.log(`Server is running on port ${PORT}`);
