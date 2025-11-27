@@ -20,8 +20,14 @@ export class CommandProcessor {
             await UserService.createAccount(username);
             console.log(`✅ Created new user: ${username} (No password set yet)`);
             newUserMessage = ' (Welcome! Go to the website to set your password.)';
-        } catch (e) {
-            // User exists, ignore
+        } catch (e: any) {
+            // Only ignore if user already exists, otherwise log the error
+            if (e.message === 'User already exists') {
+                console.log(`ℹ️  User ${username} already exists, continuing...`);
+            } else {
+                console.error(`❌ Failed to create user ${username}:`, e);
+                // Continue anyway - maybe user was created in a previous request
+            }
         }
 
         const result = await this.dispatch(command, username, args, auctionId);
